@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import torch_efficient_distloss
+import segment_cumsum_cuda
 
 def eff_distloss_native(w, m, interval):
     '''
@@ -85,7 +85,7 @@ class FlattenEffDistLoss(torch.autograd.Function):
         '''
 
         n_rays = ray_id.max()+1
-        w_prefix, w_total, wm_prefix, wm_total = torch_efficient_distloss.segment_cumsum(w, m, ray_id)
+        w_prefix, w_total, wm_prefix, wm_total = segment_cumsum_cuda.segment_cumsum(w, m, ray_id)
         loss_uni = (1/3) * interval * w.pow(2)
         loss_bi = 2 * w * (m * w_prefix - wm_prefix)
         if torch.is_tensor(interval):
