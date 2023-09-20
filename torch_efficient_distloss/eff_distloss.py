@@ -5,13 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from torch.utils.cpp_extension import load
-parent_dir = os.path.dirname(os.path.abspath(__file__))
-sources = [
-        os.path.join(parent_dir, path)
-        for path in ['cuda/segment_cumsum.cpp', 'cuda/segment_cumsum_kernel.cu']]
-__CUDA_FIRSTTIME__ = True
-
+import torch_efficient_distloss
 
 def eff_distloss_native(w, m, interval):
     '''
@@ -89,15 +83,9 @@ class FlattenEffDistLoss(torch.autograd.Function):
         interval: Scalar or float tensor in shape [N]. The query interval of each point.
         ray_id:   Long tensor in shape [N]. The ray index of each point.
         '''
-        global __CUDA_FIRSTTIME__
-        segment_cumsum_cuda = load(
-                name='segment_cumsum_cuda',
-                sources=sources,
-                verbose=__CUDA_FIRSTTIME__)
-        __CUDA_FIRSTTIME__ = False
 
         n_rays = ray_id.max()+1
-        w_prefix, w_total, wm_prefix, wm_total = segment_cumsum_cuda.segment_cumsum(w, m, ray_id)
+        w_prefix, w_total, wm_prefix, wm_total = torch_efficient_distloss.segment_cumsum(w, m, ray_id)
         loss_uni = (1/3) * interval * w.pow(2)
         loss_bi = 2 * w * (m * w_prefix - wm_prefix)
         if torch.is_tensor(interval):
