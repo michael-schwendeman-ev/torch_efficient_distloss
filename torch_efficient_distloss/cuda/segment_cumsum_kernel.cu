@@ -65,7 +65,7 @@ std::vector<torch::Tensor> segment_cumsum_cuda(torch::Tensor w, torch::Tensor s,
   auto ws_total = torch::zeros({n_rays}, torch::dtype(torch::kFloat32).device(torch::kCUDA));
 
   const int blocks = (n_rays + threads - 1) / threads;
-  AT_DISPATCH_FLOATING_TYPES(w.type(), "segment_cumsum_cuda", ([&] {
+  AT_DISPATCH_FLOATING_TYPES(w.scalar_type(), "segment_cumsum_cuda", ([&] {
     segment_cumsum_cuda_kernel<scalar_t><<<blocks, threads>>>(
         w.data<scalar_t>(),
         s.data<scalar_t>(),
